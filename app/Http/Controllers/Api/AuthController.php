@@ -8,7 +8,9 @@ use App\Http\Requests\RegisterRequest;
 use App\Traits\ApiResponse;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 // use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 
@@ -25,7 +27,7 @@ class AuthController extends Controller
         ]);
         $token = $user->createToken('auth_token')->plainTextToken;
         return $this->apiSuccess([
-            'Token' => $token,
+            'token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
         ]);
@@ -41,9 +43,21 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiSuccess([
-            'token => $token',
+            'token' => $token,
             'token_type' => 'Bearer',
             'user' => $user,
         ]);
+    }
+    public function logout()
+    {
+        try {
+            auth()->user()->tokens()->delete();
+            return $this->apiSuccess('Tokens Revoked');
+        } catch (\Throwable $e) {
+            throw new HttpResponseException($this->apiError(
+                null,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            ));
+        }
     }
 }
